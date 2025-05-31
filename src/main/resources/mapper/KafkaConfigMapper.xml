@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.kafka_alarm_receiver.mapper.KafkaConfigMapper">
+
+    <resultMap id="BaseResultMap" type="com.example.kafka_alarm_receiver.domain.KafkaConfig">
+            <id property="id" column="id" jdbcType="INTEGER"/>
+            <result property="name" column="name" jdbcType="VARCHAR"/>
+            <result property="address" column="address" jdbcType="VARCHAR"/>
+            <result property="topic" column="topic" jdbcType="VARCHAR"/>
+            <result property="consumerGroup" column="consumer_group" jdbcType="VARCHAR"/>
+            <result property="authentication" column="authentication" jdbcType="VARCHAR"/>
+            <result property="username" column="username" jdbcType="VARCHAR"/>
+            <result property="password" column="password" jdbcType="VARCHAR"/>
+            <result property="createUserId" column="create_user_id" jdbcType="BIGINT"/>
+            <result property="updateUserId" column="update_user_id" jdbcType="BIGINT"/>
+            <result property="dataResource" column="data_resource" jdbcType="INTEGER"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,name,address,
+        topic,consumer_group,authentication,
+        username,password,create_user_id,
+        update_user_id,data_resource
+    </sql>
+</mapper>

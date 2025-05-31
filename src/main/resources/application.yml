@@ -1,25 +1,66 @@
-# SQLite配置
-spring.datasource.url=jdbc:sqlite:config.db
-spring.datasource.driver-class-name=org.sqlite.JDBC
-spring.datasource.username=
-spring.datasource.password=
-spring.jpa.hibernate.ddl-auto=update
+spring:
+  datasource:
+    url: jdbc:sqlite:D:\lyj\SourceCodeRepository\kafka_alarm_receiver\identifier.sqlite
+    driver-class-name: org.sqlite.JDBC
+    username: ""
+    password: ""
+    hikari:
+      schema: classpath:schema.sql
+  jpa:
+    hibernate:
+      ddl-auto: update
 
-# ES配置
-spring.elasticsearch.uris=http://localhost:9200
-spring.elasticsearch.username=admin
-spring.elasticsearch.password=admin
-spring.data.elasticsearch.client.reactive.endpoints=localhost:9200
+  sql:
+    init:
+      schema-locations: classpath:db/migration/V1__Create_kafka_config_table.sql
+  jackson:
+    time-zone: Asia/Shanghai
+  kafka:
+    consumer:
+      enable-auto-commit: false
+      auto-offset-reset: earliest
+  elasticsearch:
+    uris: http://localhost:9200
+    username: admin
+    password: admin
+  data:
+    elasticsearch:
+      client:
+        reactive:
+          endpoints: localhost:9200
+  flyway:
+    enabled: true
+    locations: classpath:db/migration  # Flyway的SQL文件存放路径
+    baseline-on-migrate: true
+es:
+  host: 175.27.171.211
+  port: 9200
+  username: elastic
+  password: yALU+JHNyts7eXzdpUdm
+  index-template: alarm_template
+  index-pattern: kafka_alarm_log-*
 
-# Kafka消费者配置
-spring.kafka.consumer.enable-auto-commit=false
-spring.kafka.consumer.auto-offset-reset=earliest
 
-# 时区配置
-spring.jackson.time-zone=Asia/Shanghai
-
-# 索引模板名称
-es.index-template=alarm_template
-es.index-pattern=kafka_alarm_log-*
+mybatis-plus:
+  mapper-locations: classpath*:/mapper/*.xml
+  #实体扫描，多个package用逗号或者分号分隔
+  typeAliasesPackage: com.example.*.domain
+  global-config:
+    #数据库相关配置
+    db-config:
+      #主键类型  AUTO:"数据库ID自增", INPUT:"用户输入ID", ID_WORKER:"全局唯一ID (数字类型唯一ID)", UUID:"全局唯一ID UUID";
+      id-type: AUTO
+      #字段策略 IGNORED:"忽略判断",NOT_NULL:"非 NULL 判断"),NOT_EMPTY:"非空判断"
+      logic-delete-value: -1
+      logic-not-delete-value: 0
+    banner: false
+  #原生配置
+  configuration:
+    # 打印sql
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    map-underscore-to-camel-case: true
+    cache-enabled: false
+    call-setters-on-nulls: true
+    jdbc-type-for-null: 'null'
 
 
