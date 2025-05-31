@@ -68,6 +68,11 @@ public class KafkaConfig implements Serializable {
      */
     private Integer dataResource;
 
+    /**
+     * 
+     */
+    private Integer connectionStatus;
+
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 
@@ -225,6 +230,20 @@ public class KafkaConfig implements Serializable {
         this.dataResource = dataResource;
     }
 
+    /**
+     * 
+     */
+    public Integer getConnectionStatus() {
+        return connectionStatus;
+    }
+
+    /**
+     * 
+     */
+    public void setConnectionStatus(Integer connectionStatus) {
+        this.connectionStatus = connectionStatus;
+    }
+
     @Override
     public boolean equals(Object that) {
         if (this == that) {
@@ -247,7 +266,8 @@ public class KafkaConfig implements Serializable {
             && (this.getPassword() == null ? other.getPassword() == null : this.getPassword().equals(other.getPassword()))
             && (this.getCreateUserId() == null ? other.getCreateUserId() == null : this.getCreateUserId().equals(other.getCreateUserId()))
             && (this.getUpdateUserId() == null ? other.getUpdateUserId() == null : this.getUpdateUserId().equals(other.getUpdateUserId()))
-            && (this.getDataResource() == null ? other.getDataResource() == null : this.getDataResource().equals(other.getDataResource()));
+            && (this.getDataResource() == null ? other.getDataResource() == null : this.getDataResource().equals(other.getDataResource()))
+            && (this.getConnectionStatus() == null ? other.getConnectionStatus() == null : this.getConnectionStatus().equals(other.getConnectionStatus()));
     }
 
     @Override
@@ -265,6 +285,7 @@ public class KafkaConfig implements Serializable {
         result = prime * result + ((getCreateUserId() == null) ? 0 : getCreateUserId().hashCode());
         result = prime * result + ((getUpdateUserId() == null) ? 0 : getUpdateUserId().hashCode());
         result = prime * result + ((getDataResource() == null) ? 0 : getDataResource().hashCode());
+        result = prime * result + ((getConnectionStatus() == null) ? 0 : getConnectionStatus().hashCode());
         return result;
     }
 
@@ -285,6 +306,7 @@ public class KafkaConfig implements Serializable {
         sb.append(", createUserId=").append(createUserId);
         sb.append(", updateUserId=").append(updateUserId);
         sb.append(", dataResource=").append(dataResource);
+        sb.append(", connectionStatus=").append(connectionStatus);
         sb.append(", serialVersionUID=").append(serialVersionUID);
         sb.append("]");
         return sb.toString();

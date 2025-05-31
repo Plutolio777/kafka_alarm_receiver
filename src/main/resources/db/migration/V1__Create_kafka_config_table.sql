@@ -9,5 +9,6 @@ CREATE TABLE IF NOT EXISTS kafka_config (
     password VARCHAR(255),
     create_user_id BIGINT,
     update_user_id BIGINT,
-    data_resource INTEGER
+    data_resource INTEGER,
+    connection_status INTEGER
 );

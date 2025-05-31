@@ -23,7 +23,7 @@ public class ResourceController {
 
     @PostMapping("/collect")
     public ResponseEntity<KafkaConfigResponse> collectResources(@RequestBody List<KafkaConfigRequest> resources) {
-        
+
         return ResponseEntity.status(200).body(new KafkaConfigResponse());
 
     }
