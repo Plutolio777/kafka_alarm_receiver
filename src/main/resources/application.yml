@@ -1,0 +1,25 @@
+# SQLite配置
+spring.datasource.url=jdbc:sqlite:config.db
+spring.datasource.driver-class-name=org.sqlite.JDBC
+spring.datasource.username=
+spring.datasource.password=
+spring.jpa.hibernate.ddl-auto=update
+
+# ES配置
+spring.elasticsearch.uris=http://localhost:9200
+spring.elasticsearch.username=admin
+spring.elasticsearch.password=admin
+spring.data.elasticsearch.client.reactive.endpoints=localhost:9200
+
+# Kafka消费者配置
+spring.kafka.consumer.enable-auto-commit=false
+spring.kafka.consumer.auto-offset-reset=earliest
+
+# 时区配置
+spring.jackson.time-zone=Asia/Shanghai
+
+# 索引模板名称
+es.index-template=alarm_template
+es.index-pattern=kafka_alarm_log-*
+
+
