@@ -42,11 +42,9 @@ public class EsInitializer {
     @Value("${es.index-pattern}")
     private String indexPattern;
 
-    @Autowired
-    private RestClient restClient; // 用于底层调用 ILM、Alias 等
+    private final RestClient restClient; // 用于底层调用 ILM、Alias 等
 
-    @Autowired
-    private ElasticsearchClient client;
+    private final ElasticsearchClient client;
 
     private final Logger logger = LoggerFactory.getLogger(EsInitializer.class);
 
@@ -54,40 +52,29 @@ public class EsInitializer {
     public void init() {
         try {
             log.info("run EsInitializer with index pattern {} and template {}", indexPattern, templateName);
-            checkEsHealth();
-            createInitialIndexWithAlias();
-            setIndex();
+            // 1.检查ES健康请情况
+            if (checkEsHealth()) {
+                // 2.设置索引模版
+                createInitialIndexWithAlias();
+                // 3.尝试设置当天索引
+//                setIndex();
+            }
         } catch (Exception e) {
             logger.error("ES 初始化失败", e);
         }
     }
 
-    private void checkEsHealth()  throws Exception  {
-        HealthResponse health = client.cluster().health();
-        log.info(health.status().toString());
-    }
+    private boolean checkEsHealth()  throws Exception  {
+        try {
+            HealthResponse health = client.cluster().health();
+            return true;
+        } catch (ElasticsearchException e) {
+            log.error("connect es error: ", e);
 
-//    private void createIlmPolicy() throws Exception {
-//
-//        PutLifecycleRequest.Builder builder = new PutLifecycleRequest.Builder();
-//        builder
-//                .name("kafka_alarm_log_ilm_policy")
-//                .policy(p -> p.phases(
-//                                ph -> ph.hot(
-//                                                h -> h.actions(
-//                                                        a -> a.rollover(
-//                                                                ro -> ro.maxAge(Time.of(t -> t.time("1d")))
-//                                                        )
-//                                                )
-//                                        )
-//                                        .delete(dl -> dl.minAge(Time.of(t -> t.time("365d"))).actions(at -> at.delete(dd -> dd)))
-//                        )
-//                );
-////        System.out.println(builder.build().toString());
-//        PutLifecycleResponse kafkaAlarmLogIlmPolicy = client.ilm()
-//                .putLifecycle(builder.build());
-//        logger.info("✅ 创建 ILM 策略成功: {}", kafkaAlarmLogIlmPolicy.toString());
-//    }
+        }
+        return false;
+
+    }
 
     private void createInitialIndexWithAlias() throws Exception {
 
@@ -100,50 +87,66 @@ public class EsInitializer {
                         .numberOfReplicas("1")
                 ).mappings(mp->mp
                         .source(s->s.enabled(true))
-                        .properties("src_acknowledgementtimestamp", Property.of(p -> p.keyword(k -> k)))
-                        .properties("src_alarm_ntime", Property.of(p -> p.date(d -> d.format("yyyy-MM-dd HH:mm:ss"))))
-                        .properties("src_perceivedseverity", Property.of(p -> p.integer(i -> i)))
-                        .properties("src_manu_alarmflag", Property.of(p -> p.keyword(k -> k)))
-                        .properties("src_eventtime", Property.of(p -> p.date(d -> d.format("yyyy-MM-dd HH:mm:ss"))))
-                        .properties("src_locationinfo", Property.of(p -> p.keyword(k -> k)))
-                        .properties("src_alarmcode", Property.of(p -> p.keyword(k -> k)))
-                        .properties("src_alarmid", Property.of(p -> p.long_(l -> l)))
-                        .properties("src_nms_type", Property.of(p -> p.keyword(k -> k)))
-                        .properties("src_sync_flag", Property.of(p -> p.keyword(k -> k)))
-                        .properties("src_alarmsubtype", Property.of(p -> p.keyword(k -> k)))
-                        .properties("src_alarm_nid", Property.of(p -> p.keyword(k -> k)))
-                        .properties("src_alarm_problem", Property.of(p -> p.text(t -> t)))
-                        .properties("src_specialty", Property.of(p -> p.keyword(k -> k)))
-                        .properties("src_id", Property.of(p -> p.keyword(k -> k)))
-                        .properties("src_system_type", Property.of(p -> p.keyword(k -> k)))
-                        .properties("src_region", Property.of(p -> p.keyword(k -> k)))
-                        .properties("src_system_dn", Property.of(p -> p.keyword(k -> k)))
-                        .properties("src_ackstatus", Property.of(p -> p.keyword(k -> k)))
-                        .properties("src_is_test", Property.of(p -> p.boolean_(b -> b)))
-                        .properties("src_alarmtitle", Property.of(p -> p.text(t -> t)))
-                        .properties("src_ip", Property.of(p -> p.ip(i -> i)))
-                        .properties("src_equipmentname", Property.of(p -> p.text(t -> t)))
-                        .properties("src_inerttime", Property.of(p -> p.date(d -> d.format("yyyy-MM-dd HH:mm:ss"))))
-                        .properties("src_source", Property.of(p -> p.keyword(k -> k)))
-                        .properties("src_alarmtype", Property.of(p -> p.keyword(k -> k)))
-                        .properties("src_clearancereportflag", Property.of(p -> p.boolean_(b -> b)))
-                        .properties("src_ipaddress", Property.of(p -> p.ip(i -> i)))
-                        .properties("src_state", Property.of(p -> p.integer(i -> i)))
-                        .properties("src_name", Property.of(p -> p.text(t -> t)))
-                        .properties("src_vendor_alarmid", Property.of(p -> p.keyword(k -> k)))
-                        .properties("src_info8", Property.of(p -> p.text(t -> t)))
-                        .properties("src_neclass", Property.of(p -> p.keyword(k -> k)))
-                        .properties("src_clearancetimestamp", Property.of(p -> p.keyword(k -> k)))
-                        .properties("src_restoretype", Property.of(p -> p.keyword(k -> k)))
-                        .properties("src_vendor", Property.of(p -> p.keyword(k -> k)))
-                        .properties("src_alarm_ntype", Property.of(p -> p.keyword(k -> k)))
-                        .properties("src_nettype", Property.of(p -> p.keyword(k -> k)))
-                        .properties("src_sendtime", Property.of(p -> p.date(d -> d.format("yyyy-MM-dd HH:mm:ss"))))
-                        .properties("src_manu_alarmtype", Property.of(p -> p.keyword(k -> k)))
-                        .properties("src_additionaltext", Property.of(p -> p.text(t -> t)))
-                        .properties("src_sync_no", Property.of(p -> p.keyword(k -> k)))
-                        .properties("src_additionalinfo", Property.of(p -> p.text(t -> t)))
-                        .properties("data_resource", Property.of(p->p.integer(t->t)))
+                        .properties("SRC_ACKNOWLEDGEMENTTIMESTAMP", Property.of(p -> p.keyword(k -> k)))
+                        .properties("SRC_ALARM_NTIME", Property.of(p -> p.date(d -> d.format("yyyy-MM-dd HH:mm:ss"))))
+                        .properties("SRC_PERCEIVEDSEVERITY", Property.of(p -> p.integer(i -> i)))
+                        .properties("SRC_MANU_ALARMFLAG", Property.of(p -> p.keyword(k -> k)))
+                        .properties("SRC_EVENTTIME", Property.of(p -> p.date(d -> d.format("yyyy-MM-dd HH:mm:ss"))))
+                        .properties("SRC_LOCATIONINFO", Property.of(p -> p.keyword(k -> k)))
+                        .properties("SRC_ALARMCODE", Property.of(p -> p.keyword(k -> k)))
+                        .properties("SRC_ALARMID", Property.of(p -> p.long_(l -> l)))
+                        .properties("SRC_NMS_TYPE", Property.of(p -> p.keyword(k -> k)))
+                        .properties("SRC_SYNC_FLAG", Property.of(p -> p.keyword(k -> k)))
+                        .properties("SRC_ALARMSUBTYPE", Property.of(p -> p.keyword(k -> k)))
+                        .properties("SRC_ALARM_NID", Property.of(p -> p.keyword(k -> k)))
+                        .properties("sCT", Property.of(p -> p.keyword(k -> k)))
+                        .properties("SRC_ALARM_PROBLEM", Property.of(p -> p.text(t -> t)))
+                        .properties("SRC_SPECIALTY", Property.of(p -> p.keyword(k -> k)))
+                        .properties("SRC_ID", Property.of(p -> p.keyword(k -> k)))
+                        .properties("SRC_SYSTEM_TYPE", Property.of(p -> p.keyword(k -> k)))
+                        .properties("sPS", Property.of(p -> p.keyword(k -> k)))
+                        .properties("SRC_ALARM_NO", Property.of(p -> p.keyword(k -> k)))
+                        .properties("SRC_REGION", Property.of(p -> p.keyword(k -> k)))
+                        .properties("SRC_SYSTEM_DN", Property.of(p -> p.keyword(k -> k)))
+                        .properties("SRC_ACKSTATUS", Property.of(p -> p.keyword(k -> k)))
+                        .properties("SRC_IS_TEST", Property.of(p -> p.boolean_(b -> b)))
+                        .properties("SRC_ALARMTITLE", Property.of(p -> p.text(t -> t)))
+                        .properties("SRC_INFO9", Property.of(p -> p.text(t -> t)))
+                        .properties("SRC_IP", Property.of(p -> p.ip(i -> i)))
+                        .properties("SRC_EQUIPMENTNAME", Property.of(p -> p.text(t -> t)))
+                        .properties("SRC_INERTTIME", Property.of(p -> p.date(d -> d.format("yyyy-MM-dd HH:mm:ss"))))
+                        .properties("SRC_SOURCE", Property.of(p -> p.keyword(k -> k)))
+                        .properties("SRC_ALARMTYPE", Property.of(p -> p.keyword(k -> k)))
+                        .properties("SRC_CLEARANCEREPORTFLAG", Property.of(p -> p.boolean_(b -> b)))
+                        .properties("SRC_IPADDRESS", Property.of(p -> p.ip(i -> i)))
+                        .properties("SRC_STATE", Property.of(p -> p.integer(i -> i)))
+                        .properties("SRC_NAME", Property.of(p -> p.text(t -> t)))
+                        .properties("SRC_vendor_ALARMID", Property.of(p -> p.keyword(k -> k)))
+                        .properties("SRC_INFO8", Property.of(p -> p.text(t -> t)))
+                        .properties("SRC_INFO7", Property.of(p -> p.text(t -> t)))
+                        .properties("SRC_INFO6", Property.of(p -> p.text(t -> t)))
+                        .properties("SRC_INFO5", Property.of(p -> p.text(t -> t)))
+                        .properties("SRC_NECLASS", Property.of(p -> p.keyword(k -> k)))
+                        .properties("SRC_CLEARANCETIMESTAMP", Property.of(p -> p.keyword(k -> k)))
+                        .properties("SRC_INFO4", Property.of(p -> p.text(t -> t)))
+                        .properties("SRC_INFO3", Property.of(p -> p.text(t -> t)))
+                        .properties("sEN", Property.of(p -> p.text(t -> t)))
+                        .properties("SRC_INFO2", Property.of(p -> p.text(t -> t)))
+                        .properties("SRC_INFO1", Property.of(p -> p.text(t -> t)))
+                        .properties("SRC_RESTORETYPE", Property.of(p -> p.keyword(k -> k)))
+                        .properties("SRC_ORG_CLR_OPTR", Property.of(p -> p.keyword(k -> k)))
+                        .properties("SRC_APP_ID", Property.of(p -> p.keyword(k -> k)))
+                        .properties("SRC_ALARMSID", Property.of(p -> p.keyword(k -> k)))
+                        .properties("SRC_VENDOR", Property.of(p -> p.keyword(k -> k)))
+                        .properties("SRC_ALARM_NTYPE", Property.of(p -> p.keyword(k -> k)))
+                        .properties("SRC_NETTYPE", Property.of(p -> p.keyword(k -> k)))
+                        .properties("SRC_SENDTIME", Property.of(p -> p.date(d -> d.format("yyyy-MM-dd HH:mm:ss"))))
+                        .properties("SRC_MANU_ALARMTYPE", Property.of(p -> p.keyword(k -> k)))
+                        .properties("SRC_ADDITIONALTEXT", Property.of(p -> p.text(t -> t)))
+                        .properties("SRC_SYNC_NO", Property.of(p -> p.keyword(k -> k)))
+                        .properties("SRC_ADDITIONALINFO", Property.of(p -> p.text(t -> t)))
+                        .properties("DATA_RESOURCE", Property.of(p->p.integer(t->t)))
+                        .properties("APP_NAME", Property.of(p->p.keyword(t->t)))
                 );
         PutTemplateResponse putTemplateResponse = client.indices().putTemplate(builder.build());
         logger.info("✅创建模版{}成功", "kafka_alarm_log_template");

@@ -5,7 +5,7 @@ import lombok.Data;
 
 @Data
 @Builder
-public class KafkaConfigResponse {
+public class KafkaTestResponse {
     private Long status;
     private String error;
 }

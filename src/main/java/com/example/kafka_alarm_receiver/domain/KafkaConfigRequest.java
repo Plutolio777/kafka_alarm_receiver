@@ -1,48 +1,34 @@
 package com.example.kafka_alarm_receiver.domain;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 @Data
 public class KafkaConfigRequest {
+
+
     private Long id;
-    /**
-     * 应用名称
-     */
+    @NotNull(message = "应用名称不能为空")
+    @NotBlank(message = "应用名称不能为空")
     private String name;
-    /**
-     * kafka地址
-     */
+    @NotNull(message = "Kafka连接地址不能为空")
+    @NotBlank(message = "Kafka连接地址不能为空")
     private String address;
-    /**
-     * 主题
-     */
+    @NotNull(message = "Kafka Topic不能为空")
+    @NotBlank(message = "Kafka Topic不能为空")
     private String topic;
-    /**
-     * 消费组
-     */
+
+    @NotNull(message = "Kafka 消费者组不能为空")
+    @NotBlank(message = "Kafka 消费者组不能为空")
     private String consumerGroup;
-    /**
-     * 认证机制
-     */
+
     private String authentication;
-    /**
-     * 账户名称
-     */
     private String username;
-    /**
-     * 密码
-     */
     private String password;
-    /**
-     * 创建用户id
-     */
+
     private Long createUserId;
-    /**
-     * 更新用户id
-     */
     private Long updateUserId;
-    /**
-     * kafka类型(0-采控，1-新城)
-     */
     private Integer dataResource;
 }
