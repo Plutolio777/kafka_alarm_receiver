@@ -7,6 +7,6 @@ import lombok.Data;
 @Builder
 public class AlarmTimeCount {
     private Long ckCount;
-    private Long cxCount;
+    private Long xcCount;
     private String currTime;
 }

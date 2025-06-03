@@ -12,6 +12,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 @Service
 @Slf4j
@@ -21,8 +23,15 @@ public class ElasticsearchService {
     private final ElasticsearchClient client;
 
     public void saveAlarm(AlarmMessage alarmMessage) {
+//        String indexName = "kafka_alarm_log-" +
+//                LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM"));
+//
+//        IndexRequest<AlarmMessage> request = IndexRequest.of(i -> i
+//                .index(indexName)  // 使用生成的索引名
+//                .document(alarmMessage)
+//        );
         IndexRequest<AlarmMessage> request = IndexRequest.of(i -> i
-                .index("<kafka_alarm_log-{now/M}>")  // 你的索引名
+                .index("<kafka_alarm_log-{now/d}>")  // 你的索引名
                 .document(alarmMessage)
         );
         try {

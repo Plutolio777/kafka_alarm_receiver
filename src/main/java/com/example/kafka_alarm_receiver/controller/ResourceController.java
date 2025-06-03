@@ -42,7 +42,7 @@ public class ResourceController {
             // 1.认证参数校验
             String authentication = request.getAuthentication();
             if (!"".equals(authentication) && authentication != null) {
-                if (authentication != "PLAIN" || authentication != "SCRAM") {
+                if (!"PLAIN".equals(authentication) && !"SCRAM".equals(authentication) ) {
                     return ResponseEntity.ok(
                             KafkaConfigResponse.builder()
                                     .status(500L)
