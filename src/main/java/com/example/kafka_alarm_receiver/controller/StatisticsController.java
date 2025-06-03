@@ -2,18 +2,13 @@ package com.example.kafka_alarm_receiver.controller;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.ElasticsearchException;
-import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.aggregations.CalendarInterval;
 import co.elastic.clients.elasticsearch._types.aggregations.FieldDateMath;
 import co.elastic.clients.elasticsearch.core.CountResponse;
 import com.example.kafka_alarm_receiver.domain.AlarmCountResponse;
 import com.example.kafka_alarm_receiver.domain.AlarmTimeCount;
-import com.example.kafka_alarm_receiver.domain.KafkaTestResponse;
-import com.example.kafka_alarm_receiver.service.StatisticsService;
-import com.google.common.collect.Lists;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -23,7 +18,6 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -35,12 +29,11 @@ import java.util.Map;
 public class StatisticsController {
 
 
-    private final static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     private final ElasticsearchClient client;
 
     @GetMapping("/count")
     public ResponseEntity<AlarmCountResponse> getTodayAlarmCount(){
-        CountResponse ckCountResponse = null;
+        CountResponse ckCountResponse;
         try {
                     AlarmCountResponse.AlarmCountResponseBuilder builder = AlarmCountResponse.builder();
             // 1.查询采控告警数
@@ -88,8 +81,6 @@ public List<AlarmTimeCount> getAlarmStatistics(
         String startDateStr;
         String endDateStr;
         String dateFormat;
-        String boundEndDateStr;
-        String boundStartDateStr;
         Date endLoacalDate;
         Date startLocatDate;
         SimpleDateFormat boundSdf;

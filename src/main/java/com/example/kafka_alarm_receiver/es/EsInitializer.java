@@ -2,33 +2,18 @@ package com.example.kafka_alarm_receiver.es;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.ElasticsearchException;
-import co.elastic.clients.elasticsearch._types.Time;
 import co.elastic.clients.elasticsearch._types.mapping.Property;
-import co.elastic.clients.elasticsearch.cluster.HealthResponse;
-import co.elastic.clients.elasticsearch.ilm.PutLifecycleRequest;
-import co.elastic.clients.elasticsearch.ilm.PutLifecycleResponse;
 import co.elastic.clients.elasticsearch.indices.CreateIndexRequest;
-import co.elastic.clients.elasticsearch.indices.PutIndexTemplateRequest;
 import co.elastic.clients.elasticsearch.indices.PutTemplateRequest;
-import co.elastic.clients.elasticsearch.indices.PutTemplateResponse;
-import co.elastic.clients.elasticsearch.indices.put_index_template.IndexTemplateMapping;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.elasticsearch.client.Request;
-import org.elasticsearch.client.Response;
-import org.elasticsearch.client.RestClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.elasticsearch.client.elc.ElasticsearchTemplate;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.Objects;
 
 @Component
@@ -41,8 +26,6 @@ public class EsInitializer {
 
     @Value("${es.index-pattern}")
     private String indexPattern;
-
-    private final RestClient restClient; // 用于底层调用 ILM、Alias 等
 
     private final ElasticsearchClient client;
 
@@ -57,7 +40,7 @@ public class EsInitializer {
                 // 2.设置索引模版
                 createInitialIndexWithAlias();
                 // 3.尝试设置当天索引
-//                setIndex();
+                setIndex();
             }
         } catch (Exception e) {
             logger.error("ES 初始化失败", e);
@@ -66,7 +49,7 @@ public class EsInitializer {
 
     private boolean checkEsHealth()  throws Exception  {
         try {
-            HealthResponse health = client.cluster().health();
+            client.cluster().health();
             return true;
         } catch (ElasticsearchException e) {
             log.error("connect es error: ", e);
@@ -148,7 +131,7 @@ public class EsInitializer {
                         .properties("DATA_RESOURCE", Property.of(p->p.integer(t->t)))
                         .properties("APP_NAME", Property.of(p->p.keyword(t->t)))
                 );
-        PutTemplateResponse putTemplateResponse = client.indices().putTemplate(builder.build());
+        client.indices().putTemplate(builder.build());
         logger.info("✅创建模版{}成功", "kafka_alarm_log_template");
     }
 
