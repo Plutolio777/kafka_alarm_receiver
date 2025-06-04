@@ -10,4 +10,8 @@ import com.baomidou.mybatisplus.extension.service.IService;
 */
 public interface KafkaConfigService extends IService<KafkaConfig> {
 
+    KafkaConfig getConfigByName(String name);
+    void markSuccess(String name);
+
+    void markFail(String name);
 }

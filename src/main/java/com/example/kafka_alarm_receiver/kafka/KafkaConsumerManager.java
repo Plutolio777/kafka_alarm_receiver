@@ -1,16 +1,13 @@
 package com.example.kafka_alarm_receiver.kafka;
 
-
 import com.example.kafka_alarm_receiver.domain.AlarmMessage;
 import com.example.kafka_alarm_receiver.domain.KafkaConfig;
 import com.example.kafka_alarm_receiver.es.ElasticsearchService;
 import com.example.kafka_alarm_receiver.service.KafkaConfigService;
+import com.example.kafka_alarm_receiver.service.KafkaService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.common.config.SaslConfigs;
-import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
@@ -21,10 +18,8 @@ import org.springframework.kafka.listener.ContainerProperties;
 import org.springframework.kafka.listener.MessageListener;
 import org.springframework.stereotype.Service;
 
-
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-
 
 @SuppressWarnings("ALL")
 @Slf4j
@@ -32,12 +27,12 @@ import java.util.concurrent.ConcurrentHashMap;
 @RequiredArgsConstructor
 public class KafkaConsumerManager implements ApplicationRunner {
 
+    private final KafkaService kafkaService;
     private final KafkaConfigService kafkaConfigService;
     private final ConcurrentKafkaListenerContainerFactory<String, String> listenerContainerFactory;
-    private final Map<String, ConcurrentMessageListenerContainer<String, String>> containers = new ConcurrentHashMap<>();
     private final ElasticsearchService elasticsearchService;
+    private final Map<String, ConcurrentMessageListenerContainer<String, String>> containers = new ConcurrentHashMap<>();
     private final ObjectMapper objectMapper = new ObjectMapper();
-
 
     @Override
     public void run(ApplicationArguments args) {
@@ -50,81 +45,91 @@ public class KafkaConsumerManager implements ApplicationRunner {
     }
 
     public void startAllListeners() {
-        // 1. 获取所有kafka连接配置
-        List<KafkaConfig> list = kafkaConfigService.list();
+        List<KafkaConfig> kafkaConfigs = kafkaConfigService.list();
         int consumerCount = 0;
-        for (KafkaConfig config : list) {
-            // 2.检查连接状态
+
+        for (KafkaConfig config : kafkaConfigs) {
             if (config.getConnectionStatus() == 1) {
-                this.addListener(config);
+                addListener(config);
                 consumerCount++;
             }
         }
+
         log.info("✅ [完成] 已加载 {} 个 Kafka 监听器", consumerCount);
     }
 
     public void addListener(KafkaConfig config) {
         String topic = config.getTopic();
         String application = config.getName();
+
+        // 如果该 topic 已经存在监听器，则跳过创建
         if (containers.containsKey(topic)) {
             log.warn("⚠️ [跳过] 已存在监听器，topic={}，跳过创建", topic);
             return;
         }
 
         try {
-            ContainerProperties containerProps = new ContainerProperties(topic);
-            containerProps.setGroupId(config.getConsumerGroup());
+            // 配置消息监听器
+            ContainerProperties containerProps = createContainerProperties(topic, config);
+            ConsumerFactory<String, String> consumerFactory = createConsumerFactory(config);
 
-            containerProps.setMessageListener((MessageListener<String, String>) record -> {
-                log.info("📥 [接收] topic={} | key={} | value={}", record.topic(), record.key(), record.value());
-                try {
-                    AlarmMessage alarmMessage = objectMapper.readValue(record.value(), AlarmMessage.class);
-                    alarmMessage.setDataResource(config.getDataResource());
-                    alarmMessage.setAppName(config.getName());
-                    elasticsearchService.saveAlarm(alarmMessage);
-                    log.info("✅ [写入ES] 告警数据已写入索引");
-                } catch (Exception e) {
-                    log.error("❌ [错误] 解析或写入ES失败", e);
-                }
-            });
-
-            ConcurrentMessageListenerContainer<String, String> container =
-                    new ConcurrentMessageListenerContainer<>(createConsumerFactory(config), containerProps);
-
-            container.start();
-            containers.put(application, container);
-
-            log.info("✅ [启动成功] Kafka 监听器已启动 | topic={} | group={}", topic, config.getConsumerGroup());
+            // 创建并启动 Kafka 消费者监听容器
+            startKafkaListener(application, topic, config, containerProps, consumerFactory);
         } catch (Exception e) {
-            log.error("🔥 [失败] 启动 Kafka 监听器失败 | application={} |topic={} | group={}", application, topic, config.getConsumerGroup(),e);
+            log.error("🔥 [失败] 启动 Kafka 监听器失败 | application={} | topic={} | group={}",
+                    application, topic, config.getConsumerGroup(), e);
         }
     }
 
-    public void removeListener(String application) {
-        if (containers.containsKey(application)) {
+    private ContainerProperties createContainerProperties(String topic, KafkaConfig config) {
+        ContainerProperties containerProps = new ContainerProperties(topic);
+        containerProps.setMessageListener(createMessageListener(config));
+        return containerProps;
+    }
+
+    private MessageListener<String, String> createMessageListener(KafkaConfig config) {
+        return record -> {
+            log.info("📥 [接收] topic={} | key={} | value={}", record.topic(), record.key(), record.value());
             try {
-                containers.get(application).stop();
-                containers.remove(application);
-                log.info("🛑 [停止] 已停止监听器：{}", application);
+                AlarmMessage alarmMessage = objectMapper.readValue(record.value(), AlarmMessage.class);
+                alarmMessage.setDataResource(config.getDataResource());
+                alarmMessage.setAppName(config.getName());
+                elasticsearchService.saveAlarm(alarmMessage);
+                log.info("✅ [写入ES] 告警数据已写入索引");
             } catch (Exception e) {
-                log.error("💥 [异常] 停止监听器失败：" + application, e);
+                log.error("❌ [错误] 解析或写入ES失败", e);
             }
-        } else {
-            log.warn("⚠️ [无效操作] 监听器 {} 不存在，无法停止", application);
+        };
+    }
+
+    private void startKafkaListener(String application, String topic, KafkaConfig config,
+                                    ContainerProperties containerProps, ConsumerFactory<String, String> consumerFactory) {
+        ConcurrentMessageListenerContainer<String, String> container =
+                new ConcurrentMessageListenerContainer<>(consumerFactory, containerProps);
+        container.start();
+        containers.put(application, container);
+        log.info("✅ [启动成功] Kafka 监听器已启动 | topic={} | group={}", topic, config.getConsumerGroup());
+    }
+
+    public void removeListener(String application) {
+        Optional.ofNullable(containers.get(application))
+                .ifPresentOrElse(container -> stopListener(application, container),
+                        () -> log.warn("⚠️ [无效操作] 监听器 {} 不存在，无法停止", application));
+    }
+
+    private void stopListener(String application, ConcurrentMessageListenerContainer<String, String> container) {
+        try {
+            container.stop();
+            containers.remove(application);
+            log.info("🛑 [停止] 已停止监听器：{}", application);
+        } catch (Exception e) {
+            log.error("💥 [异常] 停止监听器失败：" + application, e);
         }
     }
 
     public void removeAllListeners() {
         log.info("🧹 [清理] 准备停止所有 Kafka 监听器...");
-        for (Map.Entry<String, ConcurrentMessageListenerContainer<String, String>> entry : containers.entrySet()) {
-            String name = entry.getKey();
-            try {
-                entry.getValue().stop();
-                log.info("🛑 [已停止] 监听器 {}", name);
-            } catch (Exception e) {
-                log.error("🔥 [错误] 停止监听器 {} 失败", name, e);
-            }
-        }
+        containers.forEach(this::stopListener);
         containers.clear();
         log.info("✅ [完成] 所有 Kafka 监听器已成功清理");
     }
@@ -135,24 +140,8 @@ public class KafkaConsumerManager implements ApplicationRunner {
     }
 
     private ConsumerFactory<String, String> createConsumerFactory(KafkaConfig config) {
-        Map<String, Object> props = new HashMap<>();
-        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, config.getAddress());
-        props.put("security.protocol", "SASL_PLAINTEXT");
-        props.put(SaslConfigs.SASL_MECHANISM, config.getAuthentication());
-
-        String jaasTemplate = "org.apache.kafka.common.security.%s required username=\"%s\" password=\"%s\";";
-        String loginModule = config.getAuthentication().equalsIgnoreCase("PLAIN")
-                ? "plain.PlainLoginModule"
-                : "scram.ScramLoginModule";
-        String jaasConfig = String.format(jaasTemplate, loginModule, config.getUsername(), config.getPassword());
-        props.put(SaslConfigs.SASL_JAAS_CONFIG, jaasConfig);
-
-        props.put(ConsumerConfig.GROUP_ID_CONFIG, config.getConsumerGroup());
-        props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest");
-        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        props.put(ConsumerConfig.REQUEST_TIMEOUT_MS_CONFIG, "10000");
-        return new DefaultKafkaConsumerFactory<>(props);
+        Properties properties = kafkaService.createConsumerConfig(config);
+        Map<String, Object> configMap = (Map) properties;
+        return new DefaultKafkaConsumerFactory<>(configMap);
     }
 }
-

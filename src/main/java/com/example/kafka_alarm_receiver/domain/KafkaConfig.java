@@ -4,245 +4,36 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+
+import java.io.Serial;
 import java.io.Serializable;
+import lombok.Data;
 
 /**
  * 
  * @TableName kafka_config
  */
 @TableName(value ="kafka_config")
+@Data
 public class KafkaConfig implements Serializable {
-    /**
-     * 
-     */
+
     @TableId(type = IdType.AUTO)
     private Integer id;
-
-    /**
-     * 
-     */
     private String name;
-
-    /**
-     * 
-     */
     private String address;
-
-    /**
-     * 
-     */
     private String topic;
-
-    /**
-     * 
-     */
     private String consumerGroup;
-
-    /**
-     * 
-     */
     private String authentication;
-
-    /**
-     * 
-     */
     private String username;
-
-    /**
-     * 
-     */
     private String password;
-
-    /**
-     * 
-     */
     private Long createUserId;
-
-    /**
-     * 
-     */
     private Long updateUserId;
-
-    /**
-     * 
-     */
     private Integer dataResource;
-
-    /**
-     * 
-     */
     private Integer connectionStatus;
 
+    @Serial
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
-
-    /**
-     * 
-     */
-    public Integer getId() {
-        return id;
-    }
-
-    /**
-     * 
-     */
-    public void setId(Integer id) {
-        this.id = id;
-    }
-
-    /**
-     * 
-     */
-    public String getName() {
-        return name;
-    }
-
-    /**
-     * 
-     */
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    /**
-     * 
-     */
-    public String getAddress() {
-        return address;
-    }
-
-    /**
-     * 
-     */
-    public void setAddress(String address) {
-        this.address = address;
-    }
-
-    /**
-     * 
-     */
-    public String getTopic() {
-        return topic;
-    }
-
-    /**
-     * 
-     */
-    public void setTopic(String topic) {
-        this.topic = topic;
-    }
-
-    /**
-     * 
-     */
-    public String getConsumerGroup() {
-        return consumerGroup;
-    }
-
-    /**
-     * 
-     */
-    public void setConsumerGroup(String consumerGroup) {
-        this.consumerGroup = consumerGroup;
-    }
-
-    /**
-     * 
-     */
-    public String getAuthentication() {
-        return authentication;
-    }
-
-    /**
-     * 
-     */
-    public void setAuthentication(String authentication) {
-        this.authentication = authentication;
-    }
-
-    /**
-     * 
-     */
-    public String getUsername() {
-        return username;
-    }
-
-    /**
-     * 
-     */
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    /**
-     * 
-     */
-    public String getPassword() {
-        return password;
-    }
-
-    /**
-     * 
-     */
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    /**
-     * 
-     */
-    public Long getCreateUserId() {
-        return createUserId;
-    }
-
-    /**
-     * 
-     */
-    public void setCreateUserId(Long createUserId) {
-        this.createUserId = createUserId;
-    }
-
-    /**
-     * 
-     */
-    public Long getUpdateUserId() {
-        return updateUserId;
-    }
-
-    /**
-     * 
-     */
-    public void setUpdateUserId(Long updateUserId) {
-        this.updateUserId = updateUserId;
-    }
-
-    /**
-     * 
-     */
-    public Integer getDataResource() {
-        return dataResource;
-    }
-
-    /**
-     * 
-     */
-    public void setDataResource(Integer dataResource) {
-        this.dataResource = dataResource;
-    }
-
-    /**
-     * 
-     */
-    public Integer getConnectionStatus() {
-        return connectionStatus;
-    }
-
-    /**
-     * 
-     */
-    public void setConnectionStatus(Integer connectionStatus) {
-        this.connectionStatus = connectionStatus;
-    }
 
     @Override
     public boolean equals(Object that) {
@@ -291,24 +82,22 @@ public class KafkaConfig implements Serializable {
 
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append(getClass().getSimpleName());
-        sb.append(" [");
-        sb.append("Hash = ").append(hashCode());
-        sb.append(", id=").append(id);
-        sb.append(", name=").append(name);
-        sb.append(", address=").append(address);
-        sb.append(", topic=").append(topic);
-        sb.append(", consumerGroup=").append(consumerGroup);
-        sb.append(", authentication=").append(authentication);
-        sb.append(", username=").append(username);
-        sb.append(", password=").append(password);
-        sb.append(", createUserId=").append(createUserId);
-        sb.append(", updateUserId=").append(updateUserId);
-        sb.append(", dataResource=").append(dataResource);
-        sb.append(", connectionStatus=").append(connectionStatus);
-        sb.append(", serialVersionUID=").append(serialVersionUID);
-        sb.append("]");
-        return sb.toString();
+        return getClass().getSimpleName() +
+                " [" +
+                "Hash = " + hashCode() +
+                ", id=" + id +
+                ", name=" + name +
+                ", address=" + address +
+                ", topic=" + topic +
+                ", consumerGroup=" + consumerGroup +
+                ", authentication=" + authentication +
+                ", username=" + username +
+                ", password=" + password +
+                ", createUserId=" + createUserId +
+                ", updateUserId=" + updateUserId +
+                ", dataResource=" + dataResource +
+                ", connectionStatus=" + connectionStatus +
+                ", serialVersionUID=" + serialVersionUID +
+                "]";
     }
 }

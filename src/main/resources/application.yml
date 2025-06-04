@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: jdbc:sqlite:D:\lyj\SourceCodeRepository\kafka_alarm_receiver\identifier.sqlite
+    url: {  }
     driver-class-name: org.sqlite.JDBC
     username: ""
     password: ""
@@ -9,7 +9,6 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
-
   sql:
     init:
       schema-locations: classpath:db/migration/V1__Create_kafka_config_table.sql
@@ -19,21 +18,12 @@ spring:
     consumer:
       enable-auto-commit: false
       auto-offset-reset: earliest
-  elasticsearch:
-    uris: http://localhost:9200
-    username: admin
-    password: admin
-  data:
-    elasticsearch:
-      client:
-        reactive:
-          endpoints: localhost:9200
   flyway:
     enabled: true
     locations: classpath:db/migration  # Flyway的SQL文件存放路径
     baseline-on-migrate: true
 es:
-  host: 175.27.171.211
+  host:{}
   port: 9200
   username: elastic
   password: yALU+JHNyts7eXzdpUdm
