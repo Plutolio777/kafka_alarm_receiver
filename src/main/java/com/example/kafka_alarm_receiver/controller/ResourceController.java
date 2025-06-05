@@ -4,7 +4,6 @@ import com.example.kafka_alarm_receiver.domain.KafkaConfig;
 import com.example.kafka_alarm_receiver.domain.KafkaConfigRequest;
 import com.example.kafka_alarm_receiver.domain.KafkaConfigResponse;
 import com.example.kafka_alarm_receiver.domain.KafkaTestResponse;
-import com.example.kafka_alarm_receiver.kafka.KafkaConsumerManager;
 import com.example.kafka_alarm_receiver.service.KafkaConfigService;
 import com.example.kafka_alarm_receiver.service.KafkaService;
 import lombok.RequiredArgsConstructor;
@@ -23,8 +22,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class ResourceController {
 
     private final KafkaConfigService kafkaConfigService;
-
-    private final KafkaConsumerManager consumerManager;
 
     private final KafkaService kafkaService;
 
@@ -65,7 +62,6 @@ public class ResourceController {
         }
         if (kafkaService.testConnection(config)) {
             kafkaConfigService.markSuccess(request.getName());
-            consumerManager.restartAllListeners();
             return ResponseEntity.ok(builder.status(200L).error("").build());
         }
         builder.status(500L);

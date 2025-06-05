@@ -3,69 +3,44 @@ package com.example.kafka_alarm_receiver.kafka;
 import com.example.kafka_alarm_receiver.domain.AlarmMessage;
 import com.example.kafka_alarm_receiver.domain.KafkaConfig;
 import com.example.kafka_alarm_receiver.es.ElasticsearchService;
-import com.example.kafka_alarm_receiver.service.KafkaConfigService;
 import com.example.kafka_alarm_receiver.service.KafkaService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.ApplicationArguments;
-import org.springframework.boot.ApplicationRunner;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.listener.ConcurrentMessageListenerContainer;
 import org.springframework.kafka.listener.ContainerProperties;
 import org.springframework.kafka.listener.MessageListener;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
-import java.util.*;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 
 @SuppressWarnings("ALL")
 @Slf4j
-@Service
+@Component
 @RequiredArgsConstructor
-public class KafkaConsumerManager implements ApplicationRunner {
+public class KafkaConsumerManager implements Observer<KafkaConfig>{
 
     private final KafkaService kafkaService;
-    private final KafkaConfigService kafkaConfigService;
     private final ConcurrentKafkaListenerContainerFactory<String, String> listenerContainerFactory;
     private final ElasticsearchService elasticsearchService;
     private final Map<String, ConcurrentMessageListenerContainer<String, String>> containers = new ConcurrentHashMap<>();
     private final ObjectMapper objectMapper = new ObjectMapper();
-
-    @Override
-    public void run(ApplicationArguments args) {
-        log.info("🟢 [启动] 加载所有 Kafka 消费配置...");
-        try {
-            startAllListeners();
-        } catch (Exception e) {
-            log.error("❌ [错误] 初始化 Kafka 监听器失败", e);
-        }
-    }
-
-    public void startAllListeners() {
-        List<KafkaConfig> kafkaConfigs = kafkaConfigService.list();
-        int consumerCount = 0;
-
-        for (KafkaConfig config : kafkaConfigs) {
-            if (config.getConnectionStatus() == 1) {
-                addListener(config);
-                consumerCount++;
-            }
-        }
-
-        log.info("✅ [完成] 已加载 {} 个 Kafka 监听器", consumerCount);
-    }
-
+    private final ConfigListener listener;
     public void addListener(KafkaConfig config) {
         String topic = config.getTopic();
         String application = config.getName();
 
-        // 如果该 topic 已经存在监听器，则跳过创建
-        if (containers.containsKey(topic)) {
-            log.warn("⚠️ [跳过] 已存在监听器，topic={}，跳过创建", topic);
-            return;
+        // 如果该 topic 已经存在监听器，则停止之前的监听器
+        if (containers.containsKey(application)) {
+            removeListener(application);
+            log.info("⚠️ [跳过] 已存在监听器，topic={}，跳过创建", topic);
         }
 
         try {
@@ -134,14 +109,27 @@ public class KafkaConsumerManager implements ApplicationRunner {
         log.info("✅ [完成] 所有 Kafka 监听器已成功清理");
     }
 
-    public void restartAllListeners() {
-        removeAllListeners();
-        startAllListeners();
-    }
-
     private ConsumerFactory<String, String> createConsumerFactory(KafkaConfig config) {
         Properties properties = kafkaService.createConsumerConfig(config);
         Map<String, Object> configMap = (Map) properties;
         return new DefaultKafkaConsumerFactory<>(configMap);
+    }
+
+
+    @PostConstruct
+    public void init() {
+        listener.registerObserver(this);
+        log.info("🟢 Kafka consumer manager start successfully");
+    }
+
+    @Override
+    public void onUpdate(KafkaConfig config) {
+        log.info("Kafka consumer manager detected a configuration change and updated the consumer.");
+        addListener(config);
+    }
+
+    @Override
+    public void onInit(KafkaConfig config) {
+        this.onUpdate(config);
     }
 }
